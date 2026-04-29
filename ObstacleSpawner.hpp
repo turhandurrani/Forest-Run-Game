@@ -1,41 +1,29 @@
 #pragma once 
-#include "GameObject.hpp"
+#include "Obstacle.hpp"
+#include <cstdlib>
+#include <ctime>
 
-enum class PlayerState {
-    RUNNING,
-    JUMPING,
-    HOVERING,
-    DUCKING
-};
-
-class Player : public GameObject {
+class ObstacleSpawner {
     private:
-    PlayerState state;
-    float gravity;
-    bool onGround;
+    float spawnTimer;
+    float spawnInterval;
+    float screenWidth;
     float floorY;
+    float midY;
+    float currentSpeed;
 
-    bool isHovering;
-    float hoverTimer;
+    ObstacleType randomType();
+    float randomInterval();
 
-    static constexpr float JUMP_FORCE = -640.0f;
-    static constexpr float GRAVITY = 800.0f;
-    static constexpr float HOVER_GRAVITY = 150.0f;
-    static constexpr float MAX_HOVER_TIME = 0.6f;
-    static constexpr float DUCK_HEIGHT = 30.0f;
-    static constexpr float STAND_HEIGHT = 60.0f;
+    static constexpr float MAX_INTERVAL = 2.5f;
+    static constexpr float MIN_INTERVAL = 0.8f;
+    static constexpr float INITIAL_SPEED = 300.0f;
 
-    public: 
-    Player(float startX, float floorY);
+    public:
+    ObstacleSpawner(float screenWidth, float floorY, float midY);
 
-    void handleInput();
-    void update(float deltaTime) override;
-    void flipGravity(float newFloorY); 
+    Obstacle* update(float deltaTime);
+    void increaseSpeed(float newSpeed);
     void reset();
-
-    PlayerState getState() const;
-    bool getIsHovering() const;
-    float getHoverTime() const;
-    bool getOnGround() const;
 
 };
