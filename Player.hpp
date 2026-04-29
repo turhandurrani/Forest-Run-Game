@@ -30,7 +30,6 @@ class Player : public GameObject {
 
     void handleInput();
     void update(float deltaTime) override;
-    void flipGravity(float newFloorY); 
     void reset();
 
     PlayerState getState() const;
