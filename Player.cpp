@@ -33,7 +33,7 @@ void Player::handleInput(){
         hoverTimer = 0.0f;
     }
 
-    if(Keyboard::isKeyPressed(Keyboard::Down)){
+    if(Keyboard::isKeyPressed(Keyboard::Key::Down)){
         PlayerState::DUCKING;
         height = DUCK_HEIGHT;
     }
