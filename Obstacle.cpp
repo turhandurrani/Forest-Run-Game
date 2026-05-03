@@ -2,12 +2,12 @@
 
 Obstacle::Obstacle(float startX, float startY, ObstacleType type, float speed) : GameObject(startX, startY, 0, 0), type(type), speed(speed) {
     if(type == ObstacleType::MUSHROOM) {
-        width = 30;
-        height = 40;
+        width = 20;
+        height = 30;
     }
     else if (type == ObstacleType::THORNBUSH) {
-        width = 25; 
-        height = 70;
+        width = 50; 
+        height = 30;
     }
     else if (type == ObstacleType::OWL) {
         width = 35;
@@ -29,6 +29,10 @@ bool Obstacle::isOffScreen() const {
 
 ObstacleType Obstacle::getType() const {
     return type;
+}
+
+int Obstacle::getHeight() const{
+    return height;
 }
 
 void Obstacle::setSpeed(float newSpeed) {

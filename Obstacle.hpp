@@ -21,5 +21,7 @@ class Obstacle : public GameObject {
 
     ObstacleType getType() const;
     void setSpeed(float newSpeed);
+
+    int getHeight()const;
     
 };

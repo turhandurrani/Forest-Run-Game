@@ -6,6 +6,7 @@ ObstacleSpawner::ObstacleSpawner(float screenWidth, float floorY, float midY) : 
     spawnInterval = randomInterval();
     srand((unsigned int)time(nullptr));   
 }
+int heightToAdd;
 
 Obstacle* ObstacleSpawner::update(float deltaTime) {
     spawnTimer += deltaTime;
@@ -14,9 +15,10 @@ Obstacle* ObstacleSpawner::update(float deltaTime) {
         spawnTimer = 0.0f;
         spawnInterval = randomInterval();
         ObstacleType type = randomType();
+        int height = heightToAdd(type);
         float spawnY = (type==ObstacleType::OWL) ? midY : floorY;
 
-        return new Obstacle(screenWidth, spawnY, type, currentSpeed);
+        return new Obstacle(screenWidth, spawnY-(height), type, currentSpeed);
     }
     return nullptr;
 }
@@ -29,6 +31,19 @@ void ObstacleSpawner::reset() {
     spawnTimer = 0.0f;
     spawnInterval = randomInterval();
     currentSpeed = INITIAL_SPEED;
+}
+
+int ObstacleSpawner::heightToAdd(ObstacleType type) {
+    if (type == ObstacleType::MUSHROOM) {
+        return 30;
+    }
+    else if (type == ObstacleType::THORNBUSH) {
+        return 30;
+    }
+    else if (type == ObstacleType::TREE){
+        return 100;
+    }
+    return 0;
 }
 
 ObstacleType ObstacleSpawner::randomType() {
