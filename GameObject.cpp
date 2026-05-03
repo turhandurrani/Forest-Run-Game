@@ -19,3 +19,5 @@ float GameObject::getWidth() const {
 float GameObject::getHeight() const {
     return height;
 }
+
+
