@@ -20,9 +20,9 @@ class Player : public GameObject {
     float hoverTimer;
 
     static constexpr float JUMP_FORCE = 300;
-    static constexpr float GRAVITY = 1050.0f;
-    static constexpr float HOVER_GRAVITY = 250.0f;
-    static constexpr float MAX_HOVER_TIME = 0.5f;
+    static constexpr float GRAVITY = 800.0f;
+    static constexpr float HOVER_GRAVITY = 80.0f;
+    static constexpr float MAX_HOVER_TIME = 1.2f;
     static constexpr float DUCK_HEIGHT = 30.0f;
     static constexpr float STAND_HEIGHT = 60.0f;
 

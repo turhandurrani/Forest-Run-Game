@@ -15,7 +15,7 @@ Player::Player(float startX, float startFloorY)
 void Player::handleInput() {
     // --- JUMP ---
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space) && onGround) {
-        velY     = -sqrt(2.0f * GRAVITY * 20);
+        velY     = -520.0f;
         onGround = false;
         state    = PlayerState::JUMPING;
         
@@ -24,11 +24,10 @@ void Player::handleInput() {
     // --- HOVER (hold space while in air) ---
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space) && !onGround) {
         if (hoverTimer < MAX_HOVER_TIME) {
+            if (!isHovering) velY = -150.0f;  // small upward flutter on hover entry
             isHovering = true;
             state      = PlayerState::HOVERING;
-        } else {
-            isHovering = false;
-        }
+        } 
     } else if (onGround) {
         isHovering = false;
         hoverTimer = 0.0f;
