@@ -5,11 +5,18 @@
 #include "ScoreManager.hpp"
 #include "AudioManager.hpp"
 #include <vector>
+#include <fstream>  // for binary file handling
 
 enum class GameState {
     PLAYING,
     DEAD,
     PAUSED
+};
+
+struct SaveData {
+    float highScore;
+    int   totalCoinsEver;
+    int   gamesPlayed;
 };
 
 class GameManager {
@@ -20,7 +27,6 @@ class GameManager {
     AudioManager audioManager;
     std::vector<Obstacle*> obstacles;
     std::vector<Coin*> coins;
-
     GameState state;
     float score;
     float gameSpeed;
@@ -33,10 +39,13 @@ class GameManager {
     float invincibilityTimer;
     bool deathScoreChecked;
 
-    static constexpr float FLOOR_OFFSET = 72.0f;
-    static constexpr float SPEED_INCREASE = 20.0f;   
-    static constexpr float MAX_SPEED = 700.0f;
+    static constexpr float FLOOR_OFFSET          = 72.0f;
+    static constexpr float SPEED_INCREASE        = 20.0f;
+    static constexpr float MAX_SPEED             = 700.0f;
     static constexpr float INVINCIBILITY_DURATION = 2.0f;
+
+    static int totalGamesPlayed;
+
     float lastSpeedScore;
 
     void checkCollisions();
@@ -47,16 +56,21 @@ class GameManager {
     public:
     GameManager(float screenWidth, float screenHeight);
     ~GameManager();
-
     void update(float deltaTime);
     void reset();
 
-    GameState getState() const;
-    float getScore() const;
-    int getCoinCount() const;
-    int getLives() const;
-    float getHighScore() const;
+    void saveToFile(const std::string& filename) const;
+    void loadFromFile(const std::string& filename);
+
+    static int getTotalGamesPlayed();
+
+    inline GameState getState()    const { return state; }
+    inline float     getScore()    const { return score; }
+    inline int       getCoinCount() const { return coinCount; }
+    inline int       getLives()    const { return lives; }
+
+    float  getHighScore() const;
     Player& getPlayer();
     const std::vector<Obstacle*>& getObstacle() const;
-    const std::vector<Coin*>& getCoins() const;
+    const std::vector<Coin*>&     getCoins()    const;
 };
