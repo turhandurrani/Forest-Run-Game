@@ -2,42 +2,28 @@
 #include <SFML/Window/Keyboard.hpp>
 
 Player::Player(float startX, float startFloorY)
-    : GameObject(startX, startFloorY - 60.0f, 40.0f, 60.0f)
+    : GameObject(startX, startFloorY - STAND_HEIGHT, 54.0f, STAND_HEIGHT)
 {
+    this->floorY = startFloorY;
     gravity        = GRAVITY;
     this->floorY   = startFloorY;
     onGround       = true;
-    isHovering     = false;
-    hoverTimer     = 0.0f;
     state          = PlayerState::RUNNING;
+    justJumped     = false;
 }
 
 void Player::handleInput() {
-    // --- JUMP ---
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space) && onGround) {
-        velY     = -520.0f;
+    if ((sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up)) && onGround) {
+        velY     = JUMP_FORCE;
         onGround = false;
         state    = PlayerState::JUMPING;
-        
+        justJumped = true;
     }
 
-    // --- HOVER (hold space while in air) ---
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space) && !onGround) {
-        if (hoverTimer < MAX_HOVER_TIME) {
-            if (!isHovering) velY = -150.0f;  // small upward flutter on hover entry
-            isHovering = true;
-            state      = PlayerState::HOVERING;
-        } 
-    } else if (onGround) {
-        isHovering = false;
-        hoverTimer = 0.0f;
-    }
-
-    // --- DUCK ---
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down) or sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S)) {
         state  = PlayerState::DUCKING;
         height = DUCK_HEIGHT;
-        y = floorY + - DUCK_HEIGHT;
+        velY = -JUMP_FORCE;
     } else if (onGround && state != PlayerState::JUMPING
                         && state != PlayerState::HOVERING) {
         height = STAND_HEIGHT;
@@ -47,22 +33,14 @@ void Player::handleInput() {
 }
 
 void Player::update(float deltaTime) {
-    // Hover timer ticks up while hovering
-    if (isHovering && !onGround) {
-        hoverTimer += deltaTime;
-    }
 
-    // Apply gravity — reduced when hovering
-    float currentGravity = isHovering ? HOVER_GRAVITY : gravity;
-    velY += currentGravity * deltaTime;
+    velY += gravity * deltaTime;
     y    += velY * deltaTime;
 
     if (y + height >= floorY) {
         y          = floorY - height;
         velY       = 0;
         onGround   = true;
-        isHovering = false;
-        hoverTimer = 0.0f;
         if (state != PlayerState::DUCKING)
             state = PlayerState::RUNNING;
     }
@@ -71,19 +49,16 @@ void Player::update(float deltaTime) {
 
 
 void Player::reset() {
-    // Reset to bottom floor position
     gravity    = GRAVITY;
     y          = floorY - STAND_HEIGHT;
     velY       = 0.0f;
     velX       = 0.0f;
     onGround   = true;
-    isHovering = false;
-    hoverTimer = 0.0f;
     height     = STAND_HEIGHT;
     state      = PlayerState::RUNNING;
 }
 
 PlayerState Player::getState()      const { return state; }
-bool        Player::getIsHovering() const { return isHovering; }
-float       Player::getHoverTime() const { return hoverTimer; }
 bool        Player::getOnGround()   const { return onGround; }
+bool Player::getJustJumped()        const { return justJumped; }
+void Player::clearJustJumped()      { justJumped = false; }

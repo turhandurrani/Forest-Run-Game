@@ -1,6 +1,5 @@
 #pragma once 
 #include "GameObject.hpp"
-#include <cmath>
 
 enum class PlayerState {
     RUNNING,
@@ -15,16 +14,12 @@ class Player : public GameObject {
     float gravity;
     bool onGround;
     float floorY;
+    bool justJumped;
 
-    bool isHovering;
-    float hoverTimer;
-
-    static constexpr float JUMP_FORCE = 300;
+    static constexpr float JUMP_FORCE = -640.0f;
     static constexpr float GRAVITY = 800.0f;
-    static constexpr float HOVER_GRAVITY = 80.0f;
-    static constexpr float MAX_HOVER_TIME = 1.2f;
-    static constexpr float DUCK_HEIGHT = 30.0f;
-    static constexpr float STAND_HEIGHT = 60.0f;
+    static constexpr float STAND_HEIGHT = 72.0f; 
+    static constexpr float DUCK_HEIGHT  = 52.0f; 
 
     public: 
     Player(float startX, float floorY);
@@ -32,10 +27,10 @@ class Player : public GameObject {
     void handleInput();
     void update(float deltaTime) override;
     void reset();
+    bool getJustJumped() const;
+    void clearJustJumped();
 
     PlayerState getState() const;
-    bool getIsHovering() const;
-    float getHoverTime() const;
     bool getOnGround() const;
 
 };
