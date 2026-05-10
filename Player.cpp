@@ -123,7 +123,5 @@ void Player::reset() {
     stats          = Stats();           // reset nested stats too
 }
 
-PlayerState Player::getState()    const { return state; }
-bool        Player::getOnGround() const { return onGround; }
 bool        Player::getJustJumped() const { return justJumped; }
 void        Player::clearJustJumped()   { justJumped = false; }
