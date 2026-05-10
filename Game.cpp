@@ -13,67 +13,84 @@ Game::Game()
       gravityText(font),
       deathText(font),
       restartText(font),
-      coinText(font)
+      coinText(font),
+      livesText(font),
+      highScoreText(font)
 {
     window.setFramerateLimit(60);
     timeElapsed = 0.0f;
-
-    // --- Sky layer ---
-    skyLayer.setSize(sf::Vector2f(SCREEN_W, SCREEN_H));
-    skyLayer.setPosition({0, 0});
 
     // --- Ground layer ---
     float groundH = 100.0f;
     groundLayer.setSize(sf::Vector2f(SCREEN_W, groundH));
     groundLayer.setPosition({0, SCREEN_H - groundH});
-    groundLayer.setFillColor(sf::Color(34, 85, 34));   // dark green
+    groundLayer.setFillColor(sf::Color(34, 85, 34));
 
-    // --- Player shape ---
-    playerBody.setSize(sf::Vector2f(100.0f, 120.0f));
-    playerBody.setFillColor(sf::Color(180, 100, 220)); // purple fairy
+    if (!font.openFromFile("arial.ttf")) {}
 
-    // --- Glow effect (soft circle behind player) ---
-    playerGlow.setRadius(38.0f);
-    playerGlow.setFillColor(sf::Color(180, 100, 220, 60)); // transparent purple
-
-    // --- Font + Text ---
-    // Using default system font as fallback — Turhan can swap for a custom .ttf
-    if (!font.openFromFile("arial.ttf")) {
-        // fallback: SFML will render without font, no crash
-    }
-
-    scoreText.setFont(font);
     scoreText.setCharacterSize(28);
     scoreText.setFillColor(sf::Color::White);
     scoreText.setPosition({20, 20});
 
-    gravityText.setFont(font);
     gravityText.setCharacterSize(22);
     gravityText.setFillColor(sf::Color(200, 255, 200));
     gravityText.setPosition({20, 60});
 
-    deathText.setFont(font);
     deathText.setCharacterSize(52);
     deathText.setFillColor(sf::Color(255, 80, 80));
     deathText.setString("YOU DIED");
     deathText.setPosition({SCREEN_W / 2 - 130, SCREEN_H / 2 - 60});
 
-    restartText.setFont(font);
     restartText.setCharacterSize(28);
     restartText.setFillColor(sf::Color::White);
     restartText.setString("Press R to restart");
     restartText.setPosition({SCREEN_W / 2 - 110, SCREEN_H / 2 + 10});
 
-    coinText = sf::Text(font);
+    livesText.setCharacterSize(28);
+    livesText.setFillColor(sf::Color(255, 100, 100));
+    livesText.setPosition({20, 90});
+
+    highScoreText.setCharacterSize(28);
+    highScoreText.setFillColor(sf::Color(255,215,0));
+    highScoreText.setPosition({20,125});
+
     coinText.setCharacterSize(28);
     coinText.setFillColor(sf::Color(255, 215, 0));
     coinText.setPosition({20, 55});
+
+    bgTextures[0].loadFromFile("assets/bg1.png");
+    bgTextures[1].loadFromFile("assets/bg2.png");
+    bgTextures[2].loadFromFile("assets/bg3.png");
+    
+    for (int i = 0; i < 3; i++) {
+        bgSprites[i] = sf::Sprite(bgTextures[i], sf::IntRect({0, 0}, {1920, 1080}));
+    }
+
+    // Player animators (120x80 frames, ~10 fps)
+    animRun  = Animator("assets/playerRun1.png",  27, 36, 1, 10.0f);
+    animJump = Animator("assets/playerJump1.png", 25, 36,  1,  8.0f);
+    animDuck = Animator("assets/playerDuck1.png", 27, 26,  1, 10.0f);
+    
+    // Obstacle animators
+    animOwl      = Animator("assets/owl.png",      39, 51, 1,  1.0f);
+    animMushroom = Animator("assets/mushroom.png", 30, 31, 1, 1.0f);
+    animCoin     = Animator("assets/coin.png",     16, 16, 15, 12.0f);
+    
+    // Static obstacles
+    texThornbush.loadFromFile("assets/thronbush.png");
+    texTree.loadFromFile("assets/tree.png");
+    
+    if (!texThornbush.loadFromFile("assets/thronbush.png")) {}
+    if (!texTree.loadFromFile("assets/tree.png")) {}
+
+    spriteThornbush = sf::Sprite(texThornbush, sf::IntRect({0, 0}, {65, 32}));
+    spriteTree      = sf::Sprite(texTree,      sf::IntRect({0, 0}, {80, 112}));
+    
 }
 
 void Game::run() {
     while (window.isOpen()) {
         float deltaTime = clock.restart().asSeconds();
-        // cap deltaTime so a lag spike doesn't launch the fairy into space
         if (deltaTime > 0.05f) deltaTime = 0.05f;
 
         timeElapsed += deltaTime;
@@ -103,6 +120,16 @@ void Game::handleEvents() {
 
 void Game::update(float deltaTime) {
     gameManager.update(deltaTime);
+
+    // Update animators
+    PlayerState ps = gameManager.getPlayer().getState();
+    if      (ps == PlayerState::DUCKING)                              animDuck.update(deltaTime);
+    else if (ps == PlayerState::JUMPING || ps == PlayerState::HOVERING) animJump.update(deltaTime);
+    else                                                               animRun.update(deltaTime);
+
+    animOwl.update(deltaTime);
+    animMushroom.update(deltaTime);
+    animCoin.update(deltaTime);
 }
 
 void Game::render() {
@@ -127,20 +154,25 @@ void Game::render() {
 }
 
 void Game::drawBackground() {
-    // Sky color shifts from dusk orange -> midnight blue over time
-    skyLayer.setFillColor(getSkyColor());
-    window.draw(skyLayer);
+    int bgIndex = (int)(timeElapsed / 40.0f) % 3;
+    int nextIndex = (bgIndex + 1) % 3;
+    
+    float intervalTime = std::fmod(timeElapsed, 40.0f);
+    float alpha = std::min(std::max((intervalTime - 35.0f) / 5.0f, 0.0f), 1.0f);
 
-    // Ground — flips position when gravity flips
+    sf::Sprite& cur = *bgSprites[bgIndex];
+    cur.setColor(sf::Color(255, 255, 255, 255));
+    cur.setScale({SCREEN_W / 1920.0f, SCREEN_H / 1080.0f});
+    cur.setPosition({0, 0});
+    window.draw(cur);
+
     groundLayer.setPosition({0, SCREEN_H - 100.0f});
     window.draw(groundLayer);
 
-    // Firefly particles — simple pulsing dots scattered across screen
     float pulse = (std::sin(timeElapsed * 3.0f) + 1.0f) / 2.0f; // 0.0 - 1.0
     sf::CircleShape firefly(3.0f);
     firefly.setFillColor(sf::Color(255, 255, 150, (uint8_t)(100 + 100 * pulse)));
 
-    // Fixed positions for fireflies (consistent per run)
     float fireflyPositions[][2] = {
         {200, 200}, {450, 350}, {700, 150}, {900, 400},
         {1100, 250},{300, 500}, {600, 300}, {1050, 150}
@@ -155,97 +187,62 @@ void Game::drawPlayer() {
     Player& player = gameManager.getPlayer();
     float px = player.getX();
     float py = player.getY();
-
-    // Draw glow behind player
-    playerGlow.setPosition({px - 18, py - 10});
-    window.draw(playerGlow);
-
-    // Draw player body — color changes by state
     PlayerState state = player.getState();
-    if (state == PlayerState::HOVERING) {
-        playerBody.setFillColor(sf::Color(220, 150, 255)); // lighter when hovering
-        playerBody.setSize(sf::Vector2f(40.0f, 60.0f));
-    } else if (state == PlayerState::DUCKING) {
-        playerBody.setFillColor(sf::Color(140, 70, 180));
-        playerBody.setSize(sf::Vector2f(50.0f, 30.0f));  // wider, shorter when ducking
-    } else {
-        playerBody.setFillColor(sf::Color(180, 100, 220));
-        playerBody.setSize(sf::Vector2f(40.0f, 60.0f));
-    }
 
-    playerBody.setPosition({px, py});
-    window.draw(playerBody);
+    Animator* anim = &animRun;
+    if (state == PlayerState::JUMPING || state == PlayerState::HOVERING)
+        anim = &animJump;
+    else if (state == PlayerState::DUCKING)
+        anim = &animDuck;
 
-    // Wing flap — two small rectangles on sides, offset by time
-    float wingOffset = std::sin(timeElapsed * 15.0f) * 5.0f;
-    sf::RectangleShape wingL(sf::Vector2f(15.0f, 20.0f));
-    sf::RectangleShape wingR(sf::Vector2f(15.0f, 20.0f));
-    wingL.setFillColor(sf::Color(220, 180, 255, 180));
-    wingR.setFillColor(sf::Color(220, 180, 255, 180));
-    wingL.setPosition({px - 15, py + 10 + wingOffset});
-    wingR.setPosition({px + 40, py + 10 - wingOffset});
-    window.draw(wingL);
-    window.draw(wingR);
-
-    // Sparkle trail when jumping or hovering
-    if (state == PlayerState::JUMPING || state == PlayerState::HOVERING) {
-        sf::CircleShape sparkle(4.0f);
-        sparkle.setFillColor(sf::Color(255, 255, 100,
-                             (uint8_t)(150 + 50 * std::sin(timeElapsed * 20.0f))));
-        sparkle.setPosition({px - 10, py + 20});
-        window.draw(sparkle);
-        sparkle.setPosition({px - 5,  py + 35});
-        window.draw(sparkle);
-        sparkle.setPosition({px - 15, py + 50});
-        window.draw(sparkle);
-    }
+    sf::Sprite spr(anim->getTexture(), anim->getCurrentRect());
+    spr.setScale({2.0f, 2.0f});
+    spr.setPosition({px, py});
+    window.draw(spr);
 }
 
 void Game::drawObstacles() {
-    sf::RectangleShape shape;
-
     for (Obstacle* obs : gameManager.getObstacle()) {
-        shape.setSize(sf::Vector2f(obs->getWidth(), obs->getHeight()));
-        shape.setPosition({obs->getX(), obs->getY()});
-        shape.setFillColor(getObstacleColor(obs->getType()));
-
-        // Dark outline on all obstacles
-        shape.setOutlineThickness(2);
-        shape.setOutlineColor(sf::Color(0, 0, 0, 120));
-
-        window.draw(shape);
-
-        // Extra detail per type
-        if (obs->getType() == ObstacleType::TREE) {
-            // Draw a darker trunk at the bottom
-            sf::RectangleShape trunk(sf::Vector2f(15.0f, 30.0f));
-            trunk.setFillColor(sf::Color(80, 40, 10));
-            trunk.setPosition({obs->getX() + 12, obs->getY() + obs->getHeight() - 30});
-            window.draw(trunk);
-        }
+        float ox = obs->getX();
+        float oy = obs->getY();
+        float ow = obs->getWidth();
+        float oh = obs->getHeight();
 
         if (obs->getType() == ObstacleType::OWL) {
-            // Draw two small eye dots
-            sf::CircleShape eye(4.0f);
-            eye.setFillColor(sf::Color::Yellow);
-            eye.setPosition({obs->getX() + 8,  obs->getY() + 6});
-            window.draw(eye);
-            eye.setPosition({obs->getX() + 22, obs->getY() + 6});
-            window.draw(eye);
-        }
+        sf::Sprite spr(animOwl.getTexture(), animOwl.getCurrentRect());
+        spr.setScale({1.0f, 1.0f});
+        spr.setPosition({ox, oy});
+        window.draw(spr);
+
+    } else if (obs->getType() == ObstacleType::MUSHROOM) {
+        sf::Sprite spr(animMushroom.getTexture(), animMushroom.getCurrentRect());
+        spr.setScale({1.0f, 1.0f});
+        spr.setPosition({ox, oy});
+        window.draw(spr);
+
+    } else if (obs->getType() == ObstacleType::THORNBUSH) {
+        sf::Sprite& thornSpr = *spriteThornbush;
+        thornSpr.setScale({1.0f, 1.0f});
+        thornSpr.setPosition({ox, oy});
+        window.draw(thornSpr);
+
+    } else if (obs->getType() == ObstacleType::TREE) {
+        sf::Sprite& treeSpr = *spriteTree;
+        treeSpr.setScale({1.0f, 1.0f});
+        treeSpr.setPosition({ox, oy});
+        window.draw(treeSpr);
+    }
     }
 }
 
-void Game::drawCoins(){
-    sf::CircleShape coinShape(10.0f);
-    coinShape.setFillColor(sf::Color(255, 215, 0));
-    coinShape.setOutlineThickness(2);
-    coinShape.setOutlineColor(sf::Color(200, 160, 0));
-
+void Game::drawCoins() {
     for (Coin* c : gameManager.getCoins()) {
         if (!c->isCollected()) {
-            coinShape.setPosition({c->getX(), c->getY()});
-            window.draw(coinShape);
+            sf::Sprite spr(animCoin.getTexture());
+            spr.setTextureRect(animCoin.getCurrentRect());
+            spr.setScale({20.0f / 16.0f, 20.0f / 16.0f});
+            spr.setPosition({c->getX(), c->getY()});
+            window.draw(spr);
         }
     }
 }
@@ -260,10 +257,19 @@ void Game::drawHUD() {
     cs << "Coins: " << gameManager.getCoinCount();
     coinText.setString(cs.str());
     window.draw(coinText);
+
+    std::ostringstream ls;
+    ls << "Lives: " << gameManager.getLives();
+    livesText.setString(ls.str());
+    window.draw(livesText);
+
+    std::ostringstream hs;
+    hs << "High Score: "<<gameManager.getHighScore();
+    highScoreText.setString(hs.str());
+    window.draw(highScoreText);
 }
 
 sf::Color Game::getSkyColor() const {
-    // Lerp from dusk (255, 160, 80) to night (10, 10, 40) over 120 seconds
     float t = std::min(timeElapsed / 120.0f, 1.0f);
     uint8_t r = (uint8_t)(255 * (1 - t) + 10 * t);
     uint8_t g = (uint8_t)(160 * (1 - t) + 10 * t);
@@ -273,10 +279,10 @@ sf::Color Game::getSkyColor() const {
 
 sf::Color Game::getObstacleColor(ObstacleType type) const {
     switch (type) {
-        case ObstacleType::MUSHROOM:   return sf::Color(220, 60,  60);   // red
-        case ObstacleType::THORNBUSH:  return sf::Color(30,  120, 30);   // dark green
-        case ObstacleType::OWL:        return sf::Color(139, 90,  43);   // brown
-        case ObstacleType::TREE:       return sf::Color(20,  80,  20);   // deep green
+        case ObstacleType::MUSHROOM:   return sf::Color(220, 60,  60);
+        case ObstacleType::THORNBUSH:  return sf::Color(30,  120, 30);   
+        case ObstacleType::OWL:        return sf::Color(139, 90,  43);  
+        case ObstacleType::TREE:       return sf::Color(20,  80,  20);   
         default:                       return sf::Color::White;
     }
 }

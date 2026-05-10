@@ -5,8 +5,9 @@ GameManager::GameManager(float screenWidth, float screenHeight)
     : screenWidth(screenWidth),
       screenHeight(screenHeight),
       player(100.0f, screenHeight - FLOOR_OFFSET),
-      spawner(screenWidth, screenHeight - FLOOR_OFFSET, screenHeight / 2)
-{
+      spawner(screenWidth, screenHeight - FLOOR_OFFSET, screenHeight / 1.5),
+      scoreManager("highscore.txt")
+{    
     state           = GameState::PLAYING;
     score           = 0.0f;
     gameSpeed       = 300.0f;
@@ -14,6 +15,9 @@ GameManager::GameManager(float screenWidth, float screenHeight)
     coinCount       = 0;
     coinSpawnTimer = 0.0f;
     coinSpawnInterval = 0.0f;
+    lives = 1;
+    invincibilityTimer = 0.0f;
+    deathScoreChecked = false;
 }
 
 GameManager::~GameManager() {
@@ -25,8 +29,17 @@ GameManager::~GameManager() {
 }
 
 void GameManager::update(float deltaTime) {
-    if (state != GameState::PLAYING) return;
+    
+    if (state == GameState::DEAD){
+        if (!deathScoreChecked){
+            scoreManager.tryUpdateHighScore(score);
+            deathScoreChecked = true;
+        }
+        return;
+    }
 
+    if (state != GameState::PLAYING) return;
+    
     score     += gameSpeed * deltaTime * 0.05f;
     gameSpeed  = std::min(gameSpeed + deltaTime * 5.0f, MAX_SPEED);
 
@@ -36,6 +49,10 @@ void GameManager::update(float deltaTime) {
     }
 
     player.handleInput();
+    if (player.getJustJumped()){
+        audioManager.playJump();
+        player.clearJustJumped();
+    }
     player.update(deltaTime);
 
     Obstacle* newObs = spawner.update(deltaTime);
@@ -48,6 +65,8 @@ void GameManager::update(float deltaTime) {
     spawnCoins(deltaTime);
     for(Coin* c : coins) c->update(deltaTime);
 
+    if (invincibilityTimer > 0.0f){invincibilityTimer -= deltaTime;}
+
     cleanupObstacles();
     cleanupCoins();
     checkCollisions();
@@ -57,9 +76,9 @@ void GameManager::spawnCoins(float deltaTime){
     coinSpawnTimer += deltaTime;
     if(coinSpawnTimer >= coinSpawnInterval){
         coinSpawnTimer = 0.0f;
-        coinSpawnInterval = 1.0f * (float)(rand)() / RAND_MAX * 4.0f;
+        coinSpawnInterval = 1.0f * (float)(rand()) / RAND_MAX * 4.0f;
 
-        float baseY = (screenHeight - FLOOR_OFFSET) - 80.0f - (float)(rand() % 120);
+        float baseY = (screenHeight - FLOOR_OFFSET) - 80.0f - (float)(rand() % 60);
         for (int i = 0; i < 3; i++){
             coins.push_back(new Coin(screenWidth+ i * 35.0f, baseY, gameSpeed));
         }
@@ -79,8 +98,16 @@ void GameManager::cleanupCoins(){
 
 void GameManager::checkCollisions(){
     for (Obstacle* obs : obstacles) {
-        if (player.collidesWith(*obs)) {
-            state = GameState::DEAD;
+        if (player.collidesWith(*obs) && invincibilityTimer <= 0.0f) {
+            lives--;
+            if (lives == 0) {
+                audioManager.playGameOver();
+                state = GameState::DEAD;
+            } else {
+                player.reset();
+                invincibilityTimer = INVINCIBILITY_DURATION;
+                audioManager.playDamage();
+            }
             return;
         }
     }
@@ -88,6 +115,11 @@ void GameManager::checkCollisions(){
         if (!c->isCollected() && player.collidesWith(*c)) {
             c->collect();
             coinCount++;
+            audioManager.playCoin();
+            if (coinCount%10 == 0){
+                lives++;
+                audioManager.playExtraLife();
+            }
         }
     }
 }
@@ -113,15 +145,22 @@ void GameManager::reset() {
     score          = 0.0f;
     gameSpeed      = 300.0f;
     lastSpeedScore = 0.0f;
+    invincibilityTimer = 0.0f;
     state          = GameState::PLAYING;
+    lives = 1;
+    coinCount = 0;
+    deathScoreChecked = false;
 
     spawner.reset();
     player.reset();
+    audioManager.resumeMusic();
 }
 
-GameState                      GameManager::getState()        const { return state; }
-float                          GameManager::getScore()        const { return score; }
-Player&                        GameManager::getPlayer()             { return player; }
-const std::vector<Obstacle*>&  GameManager::getObstacle()    const { return obstacles; }
-const std::vector<Coin*>& GameManager::getCoins()     const { return coins; }
-int                        GameManager::getCoinCount() const { return coinCount; }
+GameState                       GameManager::getState()        const { return state; }
+float                           GameManager::getScore()        const { return score; }
+Player&                         GameManager::getPlayer()             { return player; }
+const std::vector<Obstacle*>&   GameManager::getObstacle()    const { return obstacles; }
+const std::vector<Coin*>&       GameManager::getCoins()     const { return coins; }
+int                             GameManager::getCoinCount() const { return coinCount; }
+int                             GameManager::getLives() const {return lives;}
+float                           GameManager::getHighScore() const {return scoreManager.getHighScore();}
