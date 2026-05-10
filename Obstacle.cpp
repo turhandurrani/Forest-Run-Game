@@ -2,20 +2,20 @@
 
 Obstacle::Obstacle(float startX, float startY, ObstacleType type, float speed) : GameObject(startX, startY, 0, 0), type(type), speed(speed) {
     if(type == ObstacleType::MUSHROOM) {
-        width = 20;
-        height = 30;
+    width  = 80;
+    height = 64;
     }
     else if (type == ObstacleType::THORNBUSH) {
-        width = 50; 
-        height = 30;
+        width  = 65;
+        height = 32;
     }
     else if (type == ObstacleType::OWL) {
-        width = 35;
-        height = 25;
+        width  = 64;
+        height = 64;
     }
     else if (type == ObstacleType::TREE) {
-        width = 40;
-        height = 100;
+        width  = 80;
+        height = 112;
     }
 }
 
