@@ -20,6 +20,7 @@ Game::Game()
     window.setFramerateLimit(60);
     timeElapsed = 0.0f;
 
+    // --- Ground layer ---
     float groundH = 100.0f;
     groundLayer.setSize(sf::Vector2f(SCREEN_W, groundH));
     groundLayer.setPosition({0, SCREEN_H - groundH});
@@ -65,12 +66,18 @@ Game::Game()
         bgSprites[i] = sf::Sprite(bgTextures[i], sf::IntRect({0, 0}, {1920, 1080}));
     }
 
+    // Player animators (120x80 frames, ~10 fps)
+    animRun  = Animator("assets/playerRun1.png",  27, 36, 1, 10.0f);
     animJump = Animator("assets/playerJump1.png", 25, 36,  1,  8.0f);
     animDuck = Animator("assets/playerDuck1.png", 27, 26,  1, 10.0f);
     
+    // Obstacle animators
+    animOwl      = Animator("assets/owl.png",      39, 51, 1,  1.0f);
     animMushroom = Animator("assets/mushroom.png", 30, 31, 1, 1.0f);
     animCoin     = Animator("assets/coin.png",     16, 16, 15, 12.0f);
     
+    // Static obstacles
+    texThornbush.loadFromFile("assets/thronbush.png");
     texTree.loadFromFile("assets/tree.png");
     
     if (!texThornbush.loadFromFile("assets/thronbush.png")) {}
@@ -114,6 +121,7 @@ void Game::handleEvents() {
 void Game::update(float deltaTime) {
     gameManager.update(deltaTime);
 
+    // Update animators
     PlayerState ps = gameManager.getPlayer().getState();
     if      (ps == PlayerState::DUCKING)                              animDuck.update(deltaTime);
     else if (ps == PlayerState::JUMPING || ps == PlayerState::HOVERING) animJump.update(deltaTime);
@@ -133,6 +141,7 @@ void Game::render() {
     drawPlayer();
     drawHUD();
 
+    // Death screen overlay
     if (gameManager.getState() == GameState::DEAD) {
         sf::RectangleShape overlay(sf::Vector2f(SCREEN_W, SCREEN_H));
         overlay.setFillColor(sf::Color(0, 0, 0, 140));
@@ -160,7 +169,7 @@ void Game::drawBackground() {
     groundLayer.setPosition({0, SCREEN_H - 100.0f});
     window.draw(groundLayer);
 
-    float pulse = (std::sin(timeElapsed * 3.0f) + 1.0f) / 2.0f; 
+    float pulse = (std::sin(timeElapsed * 3.0f) + 1.0f) / 2.0f; // 0.0 - 1.0
     sf::CircleShape firefly(3.0f);
     firefly.setFillColor(sf::Color(255, 255, 150, (uint8_t)(100 + 100 * pulse)));
 

@@ -8,6 +8,7 @@ AudioManager::AudioManager()
       extraLifeSound(extraLifeBuffer),
       gameOverSound(gameOverBuffer)
 {
+    // Load background music (streamed)
     if (!backgroundMusic.openFromFile("assets/backgroundMusic.ogg"))
         std::cout << "[AudioManager] Failed to load background music\n";
     else {
@@ -16,6 +17,7 @@ AudioManager::AudioManager()
         backgroundMusic.play();
     }
 
+    // Load sound effects
     if (!jumpBuffer.loadFromFile("assets/jump.ogg"))
         std::cout << "[AudioManager] Failed to load jump sound\n";
 
@@ -31,6 +33,7 @@ AudioManager::AudioManager()
     if (!gameOverBuffer.loadFromFile("assets/gameOver.ogg"))
         std::cout << "[AudioManager] Failed to load game over sound\n";
 
+    // Set default volumes
     jumpSound.setVolume(80.0f);
     coinSound.setVolume(70.0f);
     damageSound.setVolume(90.0f);

@@ -15,7 +15,7 @@ class ObstacleSpawner {
     ObstacleType randomType();
     float randomInterval();
 
-    static constexpr float MAX_INTERVAL = 1.75f;
+    static constexpr float MAX_INTERVAL = 2.0f;
     static constexpr float MIN_INTERVAL = 0.75f;
     static constexpr float INITIAL_SPEED = 300.0f;
 
