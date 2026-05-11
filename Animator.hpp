@@ -9,7 +9,7 @@ private:
     int          frameCount;
     int          currentFrame;
     float        frameTimer;
-    float        frameInterval;  // seconds per frame
+    float        frameInterval;
 
 public:
     Animator() = default;

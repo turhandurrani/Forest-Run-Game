@@ -4,17 +4,14 @@
 
 class AudioManager {
 private:
-    // Background music (streamed)
     sf::Music backgroundMusic;
 
-    // Sound buffers (loaded into memory)
     sf::SoundBuffer jumpBuffer;
     sf::SoundBuffer coinBuffer;
     sf::SoundBuffer damageBuffer;
     sf::SoundBuffer extraLifeBuffer;
     sf::SoundBuffer gameOverBuffer;
 
-    // Sound players
     sf::Sound jumpSound;
     sf::Sound coinSound;
     sf::Sound damageSound;

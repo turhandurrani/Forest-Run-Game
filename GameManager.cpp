@@ -51,8 +51,7 @@ void GameManager::loadFromFile(const std::string& filename) {
 
     if (file) {
         totalGamesPlayed = data.gamesPlayed;
-        // highScore is managed by ScoreManager, so just log it here
-        // You can expose a setter in ScoreManager if needed
+
     }
 }
 
@@ -64,7 +63,7 @@ void GameManager::update(float deltaTime) {
     if (state == GameState::DEAD) {
         if (!deathScoreChecked) {
             scoreManager.tryUpdateHighScore(score);
-            saveToFile("savedata.bin");   // auto-save on death (item 12)
+            saveToFile("savedata.bin");   
             deathScoreChecked = true;
         }
         return;

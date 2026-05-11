@@ -13,7 +13,6 @@ ScoreManager::ScoreManager(const std::string& path) : filePath(path), highScore(
         file.close();
     }
     catch (const ScoreFileException& e) {
-        // file doesn't exist yet on first run — not a real error
         std::cout << "[ScoreManager] " << e.what() << " — starting from 0\n";
         highScore = 0.0f;
     }

@@ -26,17 +26,14 @@ private:
     sf::Text livesText;
     sf::Text highScoreText;
 
-    // Player animators
     Animator animRun;
     Animator animJump;
     Animator animDuck;
 
-    // Obstacle animators
     Animator animOwl;
     Animator animMushroom;
     Animator animCoin;
 
-    // Static obstacle sprites
     sf::Texture texThornbush;
     sf::Texture texTree;
     std::optional<sf::Sprite> spriteThornbush;

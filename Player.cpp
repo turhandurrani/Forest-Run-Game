@@ -82,16 +82,16 @@ void Player::handleInput() {
         onGround   = false;
         state      = PlayerState::JUMPING;
         justJumped = true;
-        stats.jumpCount++;  // track jumps in nested Stats
+        stats.jumpCount++; 
     }
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down) ||
         sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S)) {
         state        = PlayerState::DUCKING;
-        this->height = DUCK_HEIGHT;   // explicit this-> (item 9)
+        this->height = DUCK_HEIGHT;   
         velY         = -JUMP_FORCE;
     } else if (onGround && state != PlayerState::JUMPING
                         && state != PlayerState::HOVERING) {
-        this->height = STAND_HEIGHT;  // explicit this-> (item 9)
+        this->height = STAND_HEIGHT;  
         state        = PlayerState::RUNNING;
         this->y      = floorY - STAND_HEIGHT;
     }
@@ -101,10 +101,10 @@ void Player::update(float deltaTime) {
     velY += gravity * deltaTime;
     y    += velY   * deltaTime;
 
-    stats.distanceTravelled += deltaTime * 200.0f; // track distance in Stats
+    stats.distanceTravelled += deltaTime * 200.0f; 
 
     if (y + height >= floorY) {
-        this->y    = floorY - height;  // explicit this-> (item 9)
+        this->y    = floorY - height;  
         velY       = 0;
         onGround   = true;
         if (state != PlayerState::DUCKING)
@@ -113,14 +113,14 @@ void Player::update(float deltaTime) {
 }
 
 void Player::reset() {
-    this->gravity  = GRAVITY;           // explicit this-> (item 9)
+    this->gravity  = GRAVITY;           
     this->y        = floorY - STAND_HEIGHT;
     this->velY     = 0.0f;
     this->velX     = 0.0f;
     this->onGround = true;
     this->height   = STAND_HEIGHT;
     state          = PlayerState::RUNNING;
-    stats          = Stats();           // reset nested stats too
+    stats          = Stats();           
 }
 
 bool        Player::getJustJumped() const { return justJumped; }

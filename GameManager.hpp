@@ -5,8 +5,7 @@
 #include "ScoreManager.hpp"
 #include "AudioManager.hpp"
 #include <vector>
-#include <fstream>  // for binary file handling
-
+#include <fstream> 
 enum class GameState {
     PLAYING,
     DEAD,
